@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 基础知识图谱</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">🧠 AI <span>基础知识图谱</span></div>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>一张图看懂人工智能</h1>
+    <p>从线性代数到大语言模型，30 个核心知识点的系统性解读。
+       点击任意节点，查看该知识的详细讲解。</p>
+  </div>
+
+  <div class="category-legend" id="legend"></div>
+
+  <div id="graph"></div>
+  <p class="tip-bar">💡 可拖拽节点调整布局 · 滚轮缩放 · 点击节点跳转详情页</p>
+
+  <footer class="footer">
+    AI 基础知识图谱 · 由 Cloudflare Pages 托管 · 持续更新中
+  </footer>
+
+  <script src="data.js"></script>
+  <script>
+    /* 分类配色 */
+    const PALETTE = [
+      "#4f6df5", // 总览      - 蓝
+      "#8b5cf6", // 数学基础  - 紫
+      "#0ea5e9", // 机器学习  - 天蓝
+      "#10b981", // 深度学习  - 绿
+      "#f59e0b", // 大语言模型 - 橙
+      "#ef4444", // 生成式 AI - 红
+      "#ec4899", // AI 工程   - 粉
+    ];
+
+    /* 图例 */
+    const legendEl = document.getElementById("legend");
+    CATEGORIES.forEach((cat, i) => {
+      const item = document.createElement("span");
+      item.innerHTML = `<span class="dot" style="background:${PALETTE[i]}"></span>${cat}`;
+      legendEl.appendChild(item);
+    });
+
+    /* 构建图谱节点和边 */
+    const graphNodes = NODES.map((n) => ({
+      id: n.id,
+      name: n.name.length > 14 ? n.name.slice(0, 14) + "…" : n.name,
+      fullName: n.name,
+      summary: n.summary,
+      category: n.category,
+      symbolSize: 34 + Math.min(n.links.length, 8) * 4, // 连接越多节点越大
+      itemStyle: { color: PALETTE[n.category] },
+      label: { show: true, fontSize: 12, color: "#333" },
+    }));
+
+    const seen = new Set();
+    const graphLinks = [];
+    NODES.forEach((n) => {
+      n.links.forEach((target) => {
+        const key = [n.id, target].sort().join("->");
+        if (!seen.has(key)) {
+          seen.add(key);
+          graphLinks.push({ source: n.id, target });
+        }
+      });
+    });
+
+    /* 渲染 */
+    const chart = echarts.init(document.getElementById("graph"));
+    chart.setOption({
+      tooltip: {
+        formatter: (p) =>
+          p.dataType === "node"
+            ? `<b>${p.data.fullName}</b><br>${p.data.summary}`
+            : "",
+      },
+      series: [
+        {
+          type: "graph",
+          layout: "force",
+          data: graphNodes,
+          links: graphLinks,
+          categories: CATEGORIES.map((name, i) => ({ name, itemStyle: { color: PALETTE[i] } })),
+          roam: true,
+          draggable: true,
+          focusNodeAdjacency: true,
+          force: {
+            repulsion: 420,
+            edgeLength: [70, 150],
+            gravity: 0.08,
+            friction: 0.2,
+          },
+          label: { position: "bottom" },
+          lineStyle: { color: "#c4c9dd", width: 1.5, curveness: 0.05, opacity: 0.7 },
+          emphasis: {
+            lineStyle: { width: 3, color: "#4f6df5" },
+            label: { fontWeight: "bold" },
+          },
+        },
+      ],
+    });
+
+    /* 点击节点 → 跳转详情页 */
+    chart.on("click", (params) => {
+      if (params.dataType === "node") {
+        window.location.href = "node.html?id=" + encodeURIComponent(params.data.id);
+      }
+    });
+
+    window.addEventListener("resize", () => chart.resize());
+  </script>
+</body>
+</html>

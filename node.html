@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识点详情</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">🧠 AI <span>基础知识图谱</span></div>
+      <a class="back-link" href="index.html">← 返回图谱</a>
+    </div>
+  </nav>
+
+  <div id="app"><!-- JS 渲染 --></div>
+
+  <footer class="footer">
+    AI 基础知识图谱 · 由 Cloudflare Pages 托管 · 持续更新中
+  </footer>
+
+  <script src="data.js"></script>
+  <script>
+    const app = document.getElementById("app");
+    const id = new URLSearchParams(location.search).get("id");
+    const node = NODE_MAP[id];
+
+    /* 找不到节点时显示 404 */
+    if (!node) {
+      app.innerHTML = `
+        <div class="not-found">
+          <h1>404</h1>
+          <p>没有找到这个知识点（id: ${id || "空"}）</p>
+          <p style="margin-top:16px"><a href="index.html">← 返回知识图谱首页</a></p>
+        </div>`;
+    } else {
+      document.title = node.name + " · AI 基础知识图谱";
+
+      /* 过滤掉无效的相关节点 */
+      const related = node.links.filter((lid) => NODE_MAP[lid]);
+
+      app.innerHTML = `
+        <header class="node-header">
+          <div class="container">
+            <div class="node-breadcrumb">
+              <a href="index.html">知识图谱</a> / ${CATEGORIES[node.category]}
+            </div>
+            <h1 class="node-title">${node.name}</h1>
+            <p class="node-tagline">${node.tagline}</p>
+          </div>
+        </header>
+
+        <main class="node-body">
+          <div class="container">
+            <article class="card">${node.content}</article>
+
+            <section class="related">
+              <h2>🔗 相关知识点</h2>
+              <div class="related-grid">
+                ${related.map((lid) => {
+                  const r = NODE_MAP[lid];
+                  return `
+                    <a class="related-card" href="node.html?id=${r.id}">
+                      <div class="cat">${CATEGORIES[r.category]}</div>
+                      <div class="name">${r.name}</div>
+                    </a>`;
+                }).join("")}
+              </div>
+            </section>
+          </div>
+        </main>`;
+    }
+  </script>
+</body>
+</html>
