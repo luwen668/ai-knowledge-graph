@@ -1,0 +1,6 @@
+name = "ai-knowledge-graph"
+compatibility_date = "2025-09-25"
+
+# 纯静态网站：当前目录下的所有文件作为站点资源直接部署
+[assets]
+directory = "."
